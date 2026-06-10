@@ -1,63 +1,61 @@
 # 🌟 bash-lib
 
-A premium, lightweight, dependency-free Bash framework for modular scripting. `bash-lib` allows you to load tools, UI elements, and diagnostics dynamically directly in-memory from remote URLs—giving your scripts zero local installation overhead.
+A premium, lightweight, dependency-free Bash library for modular scripting. Load UI elements, async processes, and diagnostic utilities instantly, directly in-memory from remote URLs or local clones.
 
 ---
 
-## 🚀 One-Line Bootstrap Header
+## 🚀 Quick Start (Online Sourcing)
 
-To use this library in any script, simply add this bootstrap header at the top of your project file:
+To source remote modules dynamically directly in-memory without installing anything locally:
 
 ```bash
-# Bootstrap bash-lib directly in-memory
-source <(curl -fsSL https://raw.githubusercontent.com/corechunk/bash-lib/main/lib/glob/glob.sh) && bl_init
-```
+# 1. Source the importer
+source <(curl -fsSL https://raw.githubusercontent.com/corechunk/bash-lib/main/lib/core/import.sh)
 
----
+# 2. Sourced selectively on-demand (e.g. only UI progress bars)
+bl_import "ui/*"
 
-## 🛠️ Usage Examples
-
-### 1. Load Everything
-If you want to import all utilities (UI, diagnostics, async helpers, etc.) instantly:
-```bash
-#!/usr/bin/env bash
-source <(curl -fsSL https://raw.githubusercontent.com/corechunk/bash-lib/main/lib/glob/glob.sh) && bl_init
-
-# Slices and sources all scripts from online
-bl_glob_source "*"
-
-# Run a progress bar component immediately
+# 3. Use the components
 for i in {1..100}; do echo "$i"; sleep 0.01; done | bl_progress_bar -l "Syncing Data"
 ```
 
-### 2. Load by Category (On-Demand)
-Keep your footprint tiny by loading only specific directories (e.g. `ui`, `core`, `info`):
+### 💡 Optional Diagnostics & Tutorials (Online)
+You can optionally pull down only diagnostics or the interactive tutorial:
+
 ```bash
-#!/usr/bin/env bash
-source <(curl -fsSL https://raw.githubusercontent.com/corechunk/bash-lib/main/lib/glob/glob.sh) && bl_init
+# Sourcing the environment check diagnostics (Optional Include)
+bl_import "info/diagnostics.sh" && bl_info_check
 
-# Sourced selectively
-bl_glob_source "ui/*"
-
-# Your code
-```
-
-### 3. Run Environment Diagnostics
-Sourcing the info checker helps inspect your current loaded environment variables and functions:
-```bash
-#!/usr/bin/env bash
-source <(curl -fsSL https://raw.githubusercontent.com/corechunk/bash-lib/main/lib/glob/glob.sh) && bl_init
-
-# Source diagnostics
-bl_glob_source "info/*"
-
-# Check loaded modules
-bl_info_check
+# Sourcing the interactive tutor lessons guide (Optional Include)
+bl_import "info/tutor.sh" && bl_bash_tutor
 ```
 
 ---
 
-## ⚙️ Features
-* **In-Memory Loading**: Sources remote script components dynamically via process substitution. No local directory contamination or configuration files left behind.
-* **Namespace Diagnostics**: Dynamic verification checker `bl_info_check` scans shell memory to identify missing library dependencies.
-* **Updater Module**: Rebuilds the remote registry maps by scanning the repository tree dynamically (`bl_file_registry_update`).
+## 📦 Local Sourcing
+
+If you prefer to source files locally from your clone:
+
+```bash
+# 1. Clone the repository
+git clone https://github.com/corechunk/bash-lib.git
+cd bash-lib
+
+# 2. Source the importer and core modules in your script
+source lib/core/import.sh
+source lib/core/colors.sh
+source lib/core/deps.sh
+
+# 3. Optionally source diagnostics, tutors, or UI modules individually
+source lib/info/diagnostics.sh   # Run bl_info_check
+source lib/info/tutor.sh         # Run bl_bash_tutor
+source lib/ui/progress_bars.sh   # Run bl_progress_bar
+```
+
+---
+
+## 📚 Documentation & Reference
+
+*   [API Reference & Module Map](docs/api-reference.md) — Comprehensive variables and functions checklist.
+*   [Local Sourcing Showcase](docs/local-usage.md) — How to source library files locally.
+*   [Online Sourcing Showcase](docs/online-usage.md) — Comprehensive guide to curl and glob sourcing online.
