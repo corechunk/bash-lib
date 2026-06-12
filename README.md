@@ -12,11 +12,14 @@ To source remote modules dynamically directly in-memory without installing anyth
 # 1. Source the importer
 source <(curl -fsSL https://raw.githubusercontent.com/corechunk/bash-lib/main/lib/core/import.sh)
 
-# 2. Sourced selectively on-demand (e.g. only UI progress bars)
+# 2. Source selectively on-demand (e.g. only UI progress bars)
 bl_import "ui/*"
 
 # 3. Use the components
 for i in {1..100}; do echo "$i"; sleep 0.01; done | bl_progress_bar -l "Syncing Data"
+
+# Or use the terrain loader — a Minecraft-inspired animated chunk-fill grid
+for i in {1..100}; do echo "$i"; sleep 0.02; done | bl_terrain_loader --minecraft -l "Loading World..."
 ```
 
 ### 💡 Optional Diagnostics & Tutorials (Online)
@@ -41,15 +44,14 @@ If you prefer to source files locally from your clone:
 git clone https://github.com/corechunk/bash-lib.git
 cd bash-lib
 
-# 2. Source the importer and core modules in your script
+# 2. Source the core importer
 source lib/core/import.sh
-source lib/core/colors.sh
-source lib/core/deps.sh
 
-# 3. Optionally source diagnostics, tutors, or UI modules individually
-source lib/info/diagnostics.sh   # Run bl_info_check
-source lib/info/tutor.sh         # Run bl_bash_tutor
-source lib/ui/progress_bars.sh   # Run bl_progress_bar
+# 3. Dynamically import everything else!
+import lib/*
+
+# Or conditionally import specific modules
+import lib/ui/* lib/info/diagnostics.sh
 ```
 
 ---

@@ -50,5 +50,21 @@ bl_import "info/diagnostics.sh"
 bl_import "info/tutor.sh"
 
 # Sourcing UI components
-bl_import "ui/progress_bars.sh"
+bl_import "ui/progress_bars.sh"   # bl_progress_bar, bl_square_progress, bl_spiral_progress, bl_terrain_loader
+bl_import "ui/matrix_filler.sh"   # bl_matrix_filler
 ```
+
+## 5. Using bl_terrain_loader
+After sourcing `ui/progress_bars.sh`, pipe progress values (0-100) to `bl_terrain_loader`:
+
+```bash
+source <(curl -fsSL https://raw.githubusercontent.com/corechunk/bash-lib/main/lib/core/import.sh)
+bl_import "ui/progress_bars.sh"
+
+# Random pattern (default)
+for i in {1..100}; do echo "$i"; sleep 0.02; done | bl_terrain_loader -l "Loading World..."
+
+# Full-screen Minecraft-style chunk loading
+for i in {1..100}; do echo "$i"; sleep 0.02; done | bl_terrain_loader --minecraft -fw -fh --color-mode time
+```
+

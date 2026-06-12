@@ -1,9 +1,12 @@
 # Loop across internal namespaces to check and confirm exactly which modules
 # have loaded without configuration corruption.
 bl_info_check() {
+# Rule: This function has dependencies — bl_check_deps is called as the first statement.
+    bl_check_deps "bl_info_check" "bl_registry_get_types" "bl_registry_get_funcs" "bl_registry_get_deps" || return 1
+
     # Ensure registry is loaded
     if ! declare -p BL_REGISTRY >/dev/null 2>&1; then
-        echo -e "\033[1;31m[ERROR]\033[0m BL_REGISTRY is not declared. Did you source lib/core/registry.sh?" >&2
+        echo -e "\033[1;31m[ERROR]\033[0m BL_REGISTRY is not declared. Did you source lib/core/import.sh?" >&2
         return 1
     fi
 
@@ -15,6 +18,9 @@ bl_info_check() {
     types=$(bl_registry_get_types)
     local sorted_types
     sorted_types=$(echo "$types" | tr ' ' '\n' | sort)
+
+    # Check if a dependency exists — shell function OR system command
+    _bl_dep_exists() { declare -f "$1" >/dev/null 2>&1 || command -v "$1" >/dev/null 2>&1; }
 
     for type in $sorted_types; do
         echo -e "\n\033[1;35m[$type]\033[0m"
@@ -34,7 +40,7 @@ bl_info_check() {
             IFS='|'
             for dep in $deps; do
                 if [ -n "$dep" ]; then
-                    if declare -f "$dep" >/dev/null; then
+                    if _bl_dep_exists "$dep"; then
                         dep_statuses+=("[\033[1;32m$dep (ok)\033[0m]")
                     else
                         dep_statuses+=("[\033[1;31m$dep (MISSING)\033[0m]")
@@ -66,29 +72,111 @@ bl_info_check() {
 }
 
 bl_info_menu() {
+# Rule: This function has dependencies — bl_check_deps is called as the first statement.
+    bl_check_deps "bl_info_menu" "bl_registry_get_types" "bl_registry_get_funcs" "bl_registry_get_deps" || return 1
+
     # Ensure registry is loaded
     if ! declare -p BL_REGISTRY >/dev/null 2>&1; then
-        echo -e "\033[1;31m[ERROR]\033[0m BL_REGISTRY is not declared. Did you source lib/core/registry.sh?" >&2
+        echo -e "\033[1;31m[ERROR]\033[0m BL_REGISTRY is not declared. Did you source lib/core/import.sh?" >&2
         return 1
     fi
 
     # Inner usage/details retriever
     bl_info_get_details() {
         local func="$1"
-        case "$func" in
-            bl_progress_bar)
-                echo -e "\033[1;34mDescription:\033[0m Renders responsive percentage progress bars with standard or tagged logging modes."
-                echo -e "\033[1;32mUsage:\033[0m       \033[33mbl_progress_bar [-l label] [-t] [--log-height n] [--start HEX] [--end HEX]\033[0m"
+        case "${func}" in
+            import)
+                echo -e "\033[1;34mDescription:\033[0m Sources local .sh/.bash files or extensionless bash-shebang files matching a glob pattern."
+                echo -e "\033[1;32mUsage:\033[0m       \033[33mimport <pattern> [pattern...]\033[0m"
+                echo -e "\033[1;36mExamples:\033[0m"
+                echo -e "  \033[1;33mimport lib/*\033[0m          Source all eligible files under lib/ (recursively)"
+                echo -e "  \033[1;33mimport lib/ui lib/core\033[0m Multiple dirs at once"
+                echo -e "  \033[1;33mimport aka/baka/*\033[0m     Works with any path, not just lib/"
+                echo -e "  \033[1;33mimport /abs/path/*.sh\033[0m  Absolute paths supported"
+                echo -e "\033[1;35mNote:\033[0m        Relative patterns resolve from \$PWD. Deduplicates automatically."
+                echo -e "\033[1;36mBacked by:\033[0m   bl_import_local"
+                ;;
+            bl_import)
+                echo -e "\033[1;34mDescription:\033[0m Sources remote library files from GitHub via BL_FILE_REGISTRY."
+                echo -e "\033[1;32mUsage:\033[0m       \033[33mbl_import <pattern>\033[0m"
+                echo -e "\033[1;36mExamples:\033[0m"
+                echo -e "  \033[1;33mbl_import \"*\"\033[0m         Import all registered remote files"
+                echo -e "  \033[1;33mbl_import \"ui/*\"\033[0m      Import all ui/ remote files"
+                echo -e "  \033[1;33mbl_import \"core/colors.sh\"\033[0m  Import a specific remote file"
+                echo -e "\033[1;35mRequires:\033[0m    curl, BL_FILE_REGISTRY populated"
+                ;;
+            bl_import_local)
+                echo -e "\033[1;34mDescription:\033[0m Core implementation behind import(). Sources local .sh/.bash and bash-shebang files."
+                echo -e "\033[1;32mUsage:\033[0m       \033[33mbl_import_local <pattern> [pattern...]\033[0m"
+                echo -e "\033[1;35mEligible files:\033[0m .sh, .bash extensions, or extensionless files with #!/*bash shebang."
+                echo -e "\033[1;35mNote:\033[0m        Deduplicates — same file is never sourced twice per call."
+                ;;
+            bl_matrix_filler)
+                echo -e "\033[1;34mDescription:\033[0m Terminal digital rain animation effect (Matrix style)."
+                echo -e "\033[1;32mUsage:\033[0m       \033[33mbl_matrix_filler\033[0m"
+                echo -e "\033[1;35mBehaviors:\033[0m    Fills the terminal with falling green characters. Exits on any key press."
+                echo -e "\033[1;36mDependencies:\033[0m tput"
+                ;;
+            bl_square_progress)
+                echo -e "\033[1;34mDescription:\033[0m Renders a square/rectangular progress indicator that fills up block by block."
+                echo -e "\033[1;32mUsage:\033[0m       \033[33mbl_square_progress [-l label] [-t] [-w N] [-H N] [-fw] [--brackets] [--color-mode mode] [--start HEX] [--end HEX]\033[0m"
                 echo -e "\033[1;36mArguments:\033[0m"
-                echo -e "  \033[1;33m-l | --label\033[0m    Set the header label text (defaults to 'Progress')."
-                echo -e "  \033[1;33m-t | --tagged\033[0m   Enable tagged Mode B. Parses stdin streams dynamically:"
-                echo -e "                    - \033[1;32mP:[0-100]\033[0m updates progress bar percentage."
-                echo -e "                    - \033[1;32mM:[message]\033[0m updates the single-line status text."
-                echo -e "                    - \033[1;32mL:[log_line]\033[0m appends logs into a scrolling window."
-                echo -e "  \033[1;33m--log-height\033[0m   Number of rows allocated for the scrolling log window (default: 3)."
-                echo -e "  \033[1;33m--start / --end\033[0m Start/end transition color hex codes (e.g. '0000FF' / '00FF00')."
-                echo -e "\033[1;35mStreaming info:\033[0m Feeds from standard input (stdin) via a pipe. Smooths transitions at 60 FPS."
+                echo -e "  \033[1;33m-l | --label\033[0m      Set the header label text (defaults to 'Progress')."
+                echo -e "  \033[1;33m-t | --tagged\033[0m     Enable tagged Mode B. Parses stdin streams dynamically:"
+                echo -e "                      - \033[1;32mP:[0-100]\033[0m updates percentage."
+                echo -e "                      - \033[1;32mM:[message]\033[0m updates the status text."
+                echo -e "  \033[1;33m-w | --width\033[0m      Set grid width in columns (default: 10)."
+                echo -e "  \033[1;33m-H | --height\033[0m     Set grid height in rows (default: 10)."
+                echo -e "  \033[1;33m-fw | --full-width\033[0m Auto-expand grid to fill the full terminal width."
+                echo -e "  \033[1;33m--brackets\033[0m        Render bracket decorations around each row."
+                echo -e "  \033[1;33m--color-mode\033[0m      'global' (default, whole grid shifts color) or 'position' (static left-to-right gradient)."
+                echo -e "  \033[1;33m--start / --end\033[0m   Start/end transition color hex codes."
                 echo -e "\033[1;36mDependencies:\033[0m  bl_hex_to_rgb, bl_check_deps"
+                ;;
+            bl_spiral_progress)
+                echo -e "\033[1;34mDescription:\033[0m Renders a rectangular progress indicator that fills up in a spiral (inward or outward)."
+                echo -e "\033[1;32mUsage:\033[0m       \033[33mbl_spiral_progress [-l label] [-t] [-w N] [-H N] [-fw] [--direction in|out] [--color-mode mode] [--start HEX] [--end HEX]\033[0m"
+                echo -e "\033[1;36mArguments:\033[0m"
+                echo -e "  \033[1;33m--direction\033[0m       'in' (default, outer edges to center) or 'out' (center to outer edges)."
+                echo -e "  \033[1;33m-l | --label\033[0m      Set the header label text (defaults to 'Progress')."
+                echo -e "  \033[1;33m-t | --tagged\033[0m     Enable tagged Mode B. Parses stdin streams dynamically."
+                echo -e "  \033[1;33m-w | --width\033[0m      Set grid width in columns (default: 10)."
+                echo -e "  \033[1;33m-H | --height\033[0m     Set grid height in rows (default: 10)."
+                echo -e "  \033[1;33m-fw | --full-width\033[0m Auto-expand grid to fill the full terminal width."
+                echo -e "  \033[1;33m--brackets\033[0m        Render bracket decorations around each row."
+                echo -e "  \033[1;33m--color-mode\033[0m      'global' (default) or 'position' (static gradient along spiral order)."
+                echo -e "  \033[1;33m--start / --end\033[0m   Start/end transition color hex codes."
+                echo -e "\033[1;36mDependencies:\033[0m  bl_hex_to_rgb, bl_check_deps"
+                ;;
+            bl_progress_bar)
+                echo -e "\033[1;34mDescription:\033[0m Renders responsive percentage progress bars with selective rendering components."
+                echo -e "\033[1;32mUsage:\033[0m       \033[33mbl_progress_bar [-l label] [--status] [--log] [--log-height n] [--color-mode mode] [--start HEX] [--end HEX]\033[0m"
+                echo -e "\033[1;36mArguments:\033[0m"
+                echo -e "  \033[1;33m-l | --label\033[0m      Set the header label text (defaults to 'Progress')."
+                echo -e "  \033[1;33m--status\033[0m          Enable rendering of the 'M:[status]' message line."
+                echo -e "  \033[1;33m--log\033[0m             Enable rendering of scrolling logs from 'L:[log]' tags."
+                echo -e "  \033[1;33m--log-height\033[0m      Explicitly set the number of log lines (implies --log, defaults to 3)."
+                echo -e "  \033[1;33m--color-mode\033[0m      'global' (whole bar shifts color, default) or 'position' (static left-to-right gradient)."
+                echo -e "  \033[1;33m--start / --end\033[0m   Start/end transition color hex codes."
+                echo -e "\033[1;35mBehaviors:\033[0m    Automatically switches to Tagged parsing mode if --status or --log are passed."
+                echo -e "\033[1;36mDependencies:\033[0m  bl_hex_to_rgb, bl_check_deps"
+                ;;
+            bl_terrain_loader)
+                echo -e "\033[1;34mDescription:\033[0m Renders an animated 2D terrain/chunk loading grid. Blocks fill one at a time using configurable patterns and color modes."
+                echo -e "\033[1;32mUsage:\033[0m       \033[33mbl_terrain_loader [-l label] [-w N] [-h N] [-fw] [-fh] [--pattern mode] [--minecraft] [--color-mode mode] [--start HEX] [--end HEX]\033[0m"
+                echo -e "\033[1;36mArguments:\033[0m"
+                echo -e "  \033[1;33m-l | --label\033[0m        Display label shown above the grid (default: 'Generating Terrain...')."
+                echo -e "  \033[1;33m-w | --width\033[0m         Grid width in characters (default: 40)."
+                echo -e "  \033[1;33m-h | --height\033[0m        Grid height in rows (default: 15)."
+                echo -e "  \033[1;33m-fw | --full-width\033[0m   Auto-set width to full terminal column count."
+                echo -e "  \033[1;33m-fh | --full-height\033[0m  Auto-set height to terminal line count minus 2."
+                echo -e "  \033[1;33m--pattern\033[0m             Fill pattern: 'random' (default), 'center-out', or 'minecraft'."
+                echo -e "  \033[1;33m--minecraft\033[0m           Shortcut for --pattern minecraft. Enables fuzzy center-out expansion with"
+                echo -e "                        random lag-spike blocks (15% chance), just like real Minecraft chunk loading."
+                echo -e "  \033[1;33m--color-mode\033[0m          'time' (blocks colored by fill order, default), 'position' (left-to-right gradient), or 'global' (solid shifting color)."
+                echo -e "  \033[1;33m--start / --end\033[0m       Start/end gradient hex colors (default: yellow → cyan)."
+                echo -e "\033[1;35mInput:\033[0m        Reads plain numbers 0-100 or tagged 'P:[0-100]' from stdin."
+                echo -e "\033[1;36mDependencies:\033[0m bl_hex_to_rgb, bl_check_deps"
                 ;;
             bl_check_deps)
                 echo -e "\033[1;34mDescription:\033[0m Verification utility that runs before a function executes to guard against missing dependencies."
@@ -169,9 +257,28 @@ bl_info_menu() {
                 echo -e "\033[1;35mBehaviors:\033[0m    Outputs namespace categories and color-coded status checks grouped dynamically."
                 ;;
             bl_info_menu)
-                echo -e "\033[1;34mDescription:\033[0m Interactive text browser explorer manual."
+                echo -e "\033[1;34mDescription:\033[0m Launches an interactive terminal UI menu containing full documentation."
                 echo -e "\033[1;32mUsage:\033[0m       \033[33mbl_info_menu\033[0m"
-                echo -e "\033[1;35mBehaviors:\033[0m    Launches browser framework to inspect loaded libraries, dependencies, and manuals."
+                echo -e "\033[1;36mDependencies:\033[0m bl_registry_get_types, bl_registry_get_funcs, bl_registry_get_deps"
+                ;;
+            bl_registry_get_types)
+                echo -e "\033[1;34mDescription:\033[0m Parses the BL_REGISTRY and returns a space-separated list of all available namespaces/types (e.g., 'core info ui')."
+                echo -e "\033[1;32mUsage:\033[0m       \033[33mbl_registry_get_types\033[0m"
+                echo -e "\033[1;35mOutputs:\033[0m      Unique types directly to stdout."
+                ;;
+            bl_registry_get_funcs)
+                echo -e "\033[1;34mDescription:\033[0m Parses the BL_REGISTRY for a specific namespace and returns its associated functions."
+                echo -e "\033[1;32mUsage:\033[0m       \033[33mbl_registry_get_funcs <namespace>\033[0m"
+                echo -e "\033[1;36mParameters:\033[0m"
+                echo -e "  \033[1;33mnamespace\033[0m       The group to lookup (e.g., 'ui', 'core')."
+                echo -e "\033[1;35mOutputs:\033[0m      Space-separated function names."
+                ;;
+            bl_registry_get_deps)
+                echo -e "\033[1;34mDescription:\033[0m Returns the dependency string for a specific function."
+                echo -e "\033[1;32mUsage:\033[0m       \033[33mbl_registry_get_deps <function_name>\033[0m"
+                echo -e "\033[1;36mParameters:\033[0m"
+                echo -e "  \033[1;33mfunction_name\033[0m   The name of the function to check."
+                echo -e "\033[1;35mOutputs:\033[0m      Pipe-separated dependencies (e.g., 'curl|jq'), or empty string if none."
                 ;;
             bl_bash_tutor)
                 echo -e "\033[1;34mDescription:\033[0m Interactive bash interpreter options and scripting lessons manual."
@@ -187,19 +294,6 @@ bl_info_menu() {
                 echo -e "\033[1;34mDescription:\033[0m [Planned] Non-blocking tracking PID scavenger sweep."
                 echo -e "\033[1;32mUsage:\033[0m       \033[33mbl_reap\033[0m"
                 echo -e "\033[1;35mBehaviors:\033[0m    Iterates over background job registries, reaping dead process vectors and harvesting exit codes."
-                ;;
-            bl_init)
-                echo -e "\033[1;34mDescription:\033[0m Bootstraps and imports the core registry and file registry maps into the shell environment."
-                echo -e "\033[1;32mUsage:\033[0m       \033[33mbl_init\033[0m"
-                ;;
-            bl_glob_source)
-                echo -e "\033[1;34mDescription:\033[0m Sourced libraries matcher. Streams and sources files directly from online remote URLs without storing them locally."
-                echo -e "\033[1;32mUsage:\033[0m       \033[33mbl_glob_source [pattern]\033[0m"
-                echo -e "  \033[1;33mpattern\033[0m          Glob pattern matching file names or categories. E.g. 'ui/*', 'core', or '*'."
-                ;;
-            bl_file_registry_update)
-                echo -e "\033[1;34mDescription:\033[0m Queries GitHub API to rebuild the hardcoded remote file registry mapping."
-                echo -e "\033[1;32mUsage:\033[0m       \033[33mbl_file_registry_update [repo] [org] [branch]\033[0m"
                 ;;
             *)
                 echo -e "\033[1;34mDescription:\033[0m [Planned] Details and usage will be added upon implementation."
