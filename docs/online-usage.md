@@ -23,6 +23,9 @@ Initialize the importer and source the entire library matching all files:
 # Source importer and import all modules dynamically
 source <(curl -fsSL https://raw.githubusercontent.com/corechunk/bash-lib/main/lib/core/import.sh)
 bl_import "*"
+
+# Alternatively, import in strict mode to exit early on network failures
+bl_import --strict "*"
 ```
 
 ## 3. Sourcing Categories/Folders

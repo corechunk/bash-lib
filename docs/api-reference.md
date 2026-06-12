@@ -14,14 +14,21 @@ A detailed overview of all core variables, utilities, and components available i
     *   📢 `declare -g -A BL_FILE_REGISTRY`: Global map linking library modules to their remote raw GitHub URLs.
         *   *Showcase:* `["core|colors.sh"]` ➔ `"https://raw.githubusercontent.com/corechunk/bash-lib/main/lib/core/colors.sh"`
     *   ⚙️ `bl_import()`: Streams and sources remote library files dynamically matching a search pattern.
+        *   *Flags:* `-v` verbose · `--strict` fail on error
     *   ⚙️ `bl_import_local()`: Recursively searches and sources local script modules avoiding duplication.
+        *   *Flags:* `-v` verbose · `--strict` fail on error
     *   ⚙️ `import()`: A sleek wrapper around `bl_import_local()` to load everything elegantly.
+        *   *Flags:* `-v` verbose · `--strict` fail on error
     *   ⚙️ `bl_update_registry()`: Scans the repository and queries GitHub APIs to update the remote URL registry.
     *   ⚙️ `bl_registry_get_types()`: Retrieves all unique category tags registered in the library.
     *   ⚙️ `bl_registry_get_funcs()`: Filters and returns function names registered under a specific category.
     *   ⚙️ `bl_registry_get_deps()`: Queries the dependency list for a specific registered function.
 *   📄 `versions.sh`
     *   ⚙️ `bl_version_compare()`: Left-to-right component-wise semantic version comparison utility.
+
+## 📂 dev/
+*   📄 `compile.sh`
+    *   ⚙️ `bl_compile()`: Bundles a directory of bash-lib modules into a single, compiled script file.
 
 ## 📂 string/
 *   📄 `selection.sh`

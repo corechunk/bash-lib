@@ -24,7 +24,7 @@ Initialize the importer and source the entire library matching all files:
 ```bash
 # Source importer and import all modules dynamically
 source lib/core/import.sh
-bl_import "*"
+import "*"
 ```
 
 ## 3. Sourcing Categories/Folders
@@ -33,10 +33,13 @@ Source groups of modules using category glob patterns:
 
 ```bash
 # Source everything inside the ui/ category
-bl_import "ui/*"
+import "ui/*"
 
 # Source everything inside the info/ category
-bl_import "info/*"
+import "info/*"
+
+# Source in strict mode to fail early on errors
+import --strict "core/*"
 ```
 
 ## 4. Sourcing Specific Files under a Category Individually
@@ -45,16 +48,16 @@ You can source each specific file under its respective category individually usi
 
 ```bash
 # Sourcing Core components
-bl_import "core/colors.sh"
-bl_import "core/import.sh"
+import "core/colors.sh"
+import "core/import.sh"
 
 # Sourcing Info/Diagnostics components
-bl_import "info/diagnostics.sh"
-bl_import "info/tutor.sh"
+import "info/diagnostics.sh"
+import "info/tutor.sh"
 
 # Sourcing UI components
-bl_import "ui/progress_bars.sh"   # bl_progress_bar, bl_square_progress, bl_spiral_progress, bl_terrain_loader
-bl_import "ui/matrix_filler.sh"   # bl_matrix_filler
+import "ui/progress_bars.sh"   # bl_progress_bar, bl_square_progress, bl_spiral_progress, bl_terrain_loader
+import "ui/matrix_filler.sh"   # bl_matrix_filler
 ```
 
 ## 5. Using bl_terrain_loader Locally
@@ -120,10 +123,10 @@ for i in {1..100}; do echo "$i"; sleep 0.02; done | \
 # Core importer
 source lib/core/import.sh
 # UI components
-bl_import "ui/progress_bars.sh"
-bl_import "ui/matrix_filler.sh"
+import "ui/progress_bars.sh"
+import "ui/matrix_filler.sh"
 # Info components
-bl_import "info/diagnostics.sh"
-bl_import "info/tutor.sh"
+import "info/diagnostics.sh"
+import "info/tutor.sh"
 ```
 

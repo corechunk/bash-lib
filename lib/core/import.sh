@@ -60,6 +60,9 @@ declare -g -A BL_REGISTRY=(
     ["async|bl_pid_status"]=""
     ["async|bl_pid_reap"]=""
 
+    # Dev tools
+    ["dev|bl_compile"]=""
+
     # Core Loader
     ["core|bl_import"]="curl"
     ["core|bl_import_local"]=""
@@ -69,11 +72,16 @@ declare -g -A BL_REGISTRY=(
 
 # === BL_FILE_REGISTRY_START ===
 declare -g -A BL_FILE_REGISTRY=(
+    ["async|pid.sh"]="https://raw.githubusercontent.com/corechunk/bash-lib/main/lib/async/pid.sh"
     ["core|colors.sh"]="https://raw.githubusercontent.com/corechunk/bash-lib/main/lib/core/colors.sh"
     ["core|import.sh"]="https://raw.githubusercontent.com/corechunk/bash-lib/main/lib/core/import.sh"
-    ["string|selection.sh"]="https://raw.githubusercontent.com/corechunk/bash-lib/main/lib/string/selection.sh"
+    ["core|versions.sh"]="https://raw.githubusercontent.com/corechunk/bash-lib/main/lib/core/versions.sh"
+    ["dev|compile.sh"]="https://raw.githubusercontent.com/corechunk/bash-lib/main/lib/dev/compile.sh"
     ["info|diagnostics.sh"]="https://raw.githubusercontent.com/corechunk/bash-lib/main/lib/info/diagnostics.sh"
     ["info|tutor.sh"]="https://raw.githubusercontent.com/corechunk/bash-lib/main/lib/info/tutor.sh"
+    ["io|pipes.sh"]="https://raw.githubusercontent.com/corechunk/bash-lib/main/lib/io/pipes.sh"
+    ["string|selection.sh"]="https://raw.githubusercontent.com/corechunk/bash-lib/main/lib/string/selection.sh"
+    ["ui|matrix_filler.sh"]="https://raw.githubusercontent.com/corechunk/bash-lib/main/lib/ui/matrix_filler.sh"
     ["ui|progress_bars.sh"]="https://raw.githubusercontent.com/corechunk/bash-lib/main/lib/ui/progress_bars.sh"
 )
 # === BL_FILE_REGISTRY_END ===
@@ -173,50 +181,208 @@ bl_update_registry() {
     source "$output_file"
 }
 
+# Internal helper to curl and source a remote URL with pretty error handling.
+# Usage: _bl_curl_source "key" "url" "verbose" "is_optional"
+_bl_curl_source() {
+    local key="$1"
+    local url="$2"
+    local verbose="$3"
+    local is_optional="${4:-0}"
+
+    if [[ "$verbose" -eq 1 ]]; then
+        local tag="[Sourcing Remote]"
+        local cat="${key%%|*}"
+        local file="${key#*|}"
+        if [[ "$cat" == "$file" ]]; then
+            tag="[Sourcing Monolith]"
+        fi
+        echo -n -e "\033[1;34m$tag\033[0m $key -> $url"
+    fi
+
+    local temp_err
+    temp_err=$(mktemp)
+    local curl_out
+    curl_out=$(curl -fsSL "$url" 2>"$temp_err")
+    local ec=$?
+    local curl_err
+    curl_err=$(<"$temp_err")
+    rm -f "$temp_err"
+
+    if [[ $ec -eq 0 ]]; then
+        if [[ "$verbose" -eq 1 ]]; then
+            echo -e " \033[1;32m✅\033[0m"
+        fi
+        source /dev/stdin <<< "$curl_out"
+        return 0
+    else
+        local err_label="\033[1;31m❌ [Network Error]\033[0m"
+        if [[ $ec -eq 22 ]]; then
+            err_label="\033[1;31m❌ [File Not Found]\033[0m"
+        fi
+
+        if [[ "$verbose" -eq 1 ]]; then
+            echo ""
+        fi
+
+        if [[ "$is_optional" -eq 1 ]]; then
+            if [[ "$verbose" -eq 1 ]]; then
+                echo -e "  $err_label $curl_err" >&2
+            fi
+        else
+            echo -e "  $err_label $curl_err" >&2
+        fi
+        return 1
+    fi
+}
+
 # Rule: This function has dependencies — bl_check_deps is called as the first statement.
 # Import remote libraries by pattern (e.g., "*", "ui/*", "core/colors.sh")
+# Strategy:
+#   - Specific file (e.g., "ui/progress_bars.sh"): source that file directly from registry.
+#   - Category glob (e.g., "ui/*", "ui", "*"): try the pre-compiled monolith (e.g., "ui|ui")
+#     first. If found and sourced successfully, skip individual files. Otherwise fallback
+#     to sourcing all matching .sh/.bash files individually.
 bl_import() {
     bl_check_deps "bl_import" "curl" || return 1
 
-    local pattern="${1:-*}"
+    local verbose=0
+    local strict=0
+    local has_error=0
+    local pattern
+
+    # Parse flags
+    while [[ "$#" -gt 0 ]]; do
+        case "$1" in
+            -v|--verbose) verbose=1; shift ;;
+            --strict) strict=1; shift ;;
+            -*) echo -e "\033[1;31m[ERROR]\033[0m Unknown flag: $1" >&2; return 1 ;;
+            *) pattern="$1"; shift ;;
+        esac
+    done
+    pattern="${pattern:-*}"
 
     local search_cat=""
     local search_file=""
+    local is_glob=0  # 1 = category-level glob, 0 = specific file request
 
     if [[ "$pattern" == "*" ]]; then
         search_cat="*"
         search_file="*"
+        is_glob=1
     elif [[ "$pattern" == */* ]]; then
         search_cat="${pattern%%/*}"
         search_file="${pattern#*/}"
         [[ -z "$search_file" ]] && search_file="*"
+        # Treat as glob if file part is a wildcard
+        [[ "$search_file" == "*" ]] && is_glob=1
     else
+        # e.g. "ui" — treat as category glob
         search_cat="$pattern"
         search_file="*"
+        is_glob=1
     fi
+
+    # --- Specific file import path ---
+    # Skip monolith logic entirely; source only the matched file.
+    if [[ "$is_glob" -eq 0 ]]; then
+        local key="$search_cat|$search_file"
+        local url="${BL_FILE_REGISTRY[$key]:-}"
+        if [[ -z "$url" ]]; then
+            echo -e "\033[1;31m[ERROR]\033[0m Registry entry not found: $key" >&2
+            return $strict
+        fi
+        # Only source .sh or .bash files for direct imports
+        if [[ "$search_file" != *.sh && "$search_file" != *.bash ]]; then
+            echo -e "\033[1;31m[ERROR]\033[0m '$search_file' is not a .sh or .bash file." >&2
+            return $strict
+        fi
+        if ! _bl_curl_source "$key" "$url" "$verbose" 0; then
+            echo -e "\033[1;31m[ERROR]\033[0m Failed to source remote library: $key ($url)" >&2
+            return $strict
+        fi
+        return 0
+    fi
+
+    # --- Category glob import path ---
+    # Collect unique categories that match the search pattern
+    local -A sourced_cats=()
 
     for key in "${!BL_FILE_REGISTRY[@]}"; do
         local cat="${key%%|*}"
         local file="${key#*|}"
 
+        # Filter by category
         if [[ "$search_cat" != "*" && "$cat" != "$search_cat" ]]; then
             continue
         fi
-        if [[ "$search_file" != "*" && "$file" != "$search_file" ]]; then
+
+        # Only consider .sh, .bash, or the category-named monolith (e.g. "ui|ui")
+        if [[ "$file" != *.sh && "$file" != *.bash && "$file" != "$cat" ]]; then
             continue
         fi
 
-        local url="${BL_FILE_REGISTRY[$key]}"
-        if [[ -z "$url" ]]; then
-            continue
+        # Track which categories we need to process
+        sourced_cats["$cat"]=1
+    done
+
+    # Always report if nothing matched
+    if [[ "${#sourced_cats[@]}" -eq 0 ]]; then
+        echo -e "\033[1;33m[bl_import]\033[0m No sourceable entries matched: $pattern" >&2
+        return $strict
+    fi
+
+    # Process each matched category
+    for cat in "${!sourced_cats[@]}"; do
+        local monolith_key="$cat|$cat"
+        local monolith_url="${BL_FILE_REGISTRY[$monolith_key]:-}"
+        local monolith_sourced=0
+
+        # Step A: Try the pre-compiled monolith first
+        if [[ -n "$monolith_url" ]]; then
+            if _bl_curl_source "$monolith_key" "$monolith_url" "$verbose" 1; then
+                monolith_sourced=1
+            else
+                [[ "$verbose" -eq 1 ]] && echo -e "\033[1;33m[WARN]\033[0m Monolith failed for '$cat', falling back to individual files." >&2
+            fi
         fi
 
-        echo -e "\033[1;34m[Sourcing Remote]\033[0m $key -> $url"
-        if ! source <(curl -fsSL "$url"); then
-            echo -e "\033[1;31m[ERROR]\033[0m Failed to source remote library: $key ($url)" >&2
-            return 1
+        # Step B: Fallback — source individual .sh/.bash files
+        if [[ "$monolith_sourced" -eq 0 ]]; then
+            local fallback_found=0
+            for key in "${!BL_FILE_REGISTRY[@]}"; do
+                local fcat="${key%%|*}"
+                local file="${key#*|}"
+
+                [[ "$fcat" != "$cat" ]] && continue
+                # Only source .sh or .bash files (skip the monolith key itself)
+                [[ "$file" != *.sh && "$file" != *.bash ]] && continue
+
+                local url="${BL_FILE_REGISTRY[$key]:-}"
+                [[ -z "$url" ]] && continue
+
+                if ! _bl_curl_source "$key" "$url" "$verbose" 0; then
+                    echo -e "\033[1;31m[ERROR]\033[0m Failed to source remote library: $key ($url)" >&2
+                    if [[ "$strict" -eq 1 ]]; then
+                        return 1
+                    fi
+                    has_error=1
+                fi
+                (( fallback_found++ ))
+            done
+            if [[ "$fallback_found" -eq 0 ]]; then
+                echo -e "\033[1;33m[bl_import]\033[0m No sourceable files matched for category: $cat" >&2
+                if [[ "$strict" -eq 1 ]]; then
+                    return 1
+                fi
+                has_error=1
+            fi
         fi
     done
+
+    if [[ "$strict" -eq 1 && "$has_error" -eq 1 ]]; then
+        return 1
+    fi
+    return 0
 }
 
 # Import local libraries by glob pattern.
@@ -257,12 +423,30 @@ _bl_is_sourceable() {
 
 bl_import_local() {
     bl_check_deps "bl_import_local" || return 1
-    [[ $# -eq 0 ]] && { echo -e "\033[1;31m[import]\033[0m pattern required (e.g. \"lib/*\")" >&2; return 1; }
+
+    local verbose=0
+    local strict=0
+    local patterns=()
+
+    # Parse flags before patterns
+    while [[ "$#" -gt 0 ]]; do
+        case "$1" in
+            -v|--verbose) verbose=1; shift ;;
+            --strict) strict=1; shift ;;
+            *) patterns+=("$1"); shift ;;
+        esac
+    done
+
+    if [[ "${#patterns[@]}" -eq 0 ]]; then
+        echo -e "\033[1;31m[import]\033[0m pattern required (e.g. \"lib/*\")" >&2
+        return 1
+    fi
+
     shopt -s globstar nullglob
     local found=0
     local pattern target file
     local -A _seen=()
-    for pattern in "$@"; do
+    for pattern in "${patterns[@]}"; do
         # If not absolute, resolve relative to PWD
         [[ "$pattern" != /* ]] && pattern="${PWD}/${pattern}"
         local -a targets=( $pattern )
@@ -273,7 +457,7 @@ bl_import_local() {
                     [[ -n "${_seen[$file]}" ]] && continue
                     _bl_is_sourceable "$file" || continue
                     _seen["$file"]=1
-                    echo -e "\033[1;34m[import]\033[0m $file"
+                    [[ "$verbose" -eq 1 ]] && echo -e "\033[1;34m[import]\033[0m $file"
                     source "$file"
                     (( found++ ))
                 done
@@ -281,7 +465,7 @@ bl_import_local() {
                 [[ -n "${_seen[$target]}" ]] && continue
                 _bl_is_sourceable "$target" || continue
                 _seen["$target"]=1
-                echo -e "\033[1;34m[import]\033[0m $target"
+                [[ "$verbose" -eq 1 ]] && echo -e "\033[1;34m[import]\033[0m $target"
                 source "$target"
                 (( found++ ))
             fi
@@ -289,8 +473,8 @@ bl_import_local() {
     done
     shopt -u globstar nullglob
     if (( found == 0 )); then
-        echo -e "\033[1;33m[import]\033[0m No sourceable files matched: $*" >&2
-        return 1
+        echo -e "\033[1;33m[import]\033[0m No sourceable files matched: ${patterns[*]}" >&2
+        return $strict
     fi
 }
 

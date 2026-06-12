@@ -87,29 +87,36 @@ bl_info_menu() {
         case "${func}" in
             import)
                 echo -e "\033[1;34mDescription:\033[0m Sources local .sh/.bash files or extensionless bash-shebang files matching a glob pattern."
-                echo -e "\033[1;32mUsage:\033[0m       \033[33mimport <pattern> [pattern...]\033[0m"
+                echo -e "\033[1;32mUsage:\033[0m       \033[33mimport [-v] [--strict] <pattern> [pattern...]\033[0m"
                 echo -e "\033[1;36mExamples:\033[0m"
                 echo -e "  \033[1;33mimport lib/*\033[0m          Source all eligible files under lib/ (recursively)"
                 echo -e "  \033[1;33mimport lib/ui lib/core\033[0m Multiple dirs at once"
-                echo -e "  \033[1;33mimport aka/baka/*\033[0m     Works with any path, not just lib/"
+                echo -e "  \033[1;33mimport --strict lib/*\033[0m Fails (exit 1) immediately if any file fails to source"
                 echo -e "  \033[1;33mimport /abs/path/*.sh\033[0m  Absolute paths supported"
                 echo -e "\033[1;35mNote:\033[0m        Relative patterns resolve from \$PWD. Deduplicates automatically."
                 echo -e "\033[1;36mBacked by:\033[0m   bl_import_local"
                 ;;
             bl_import)
                 echo -e "\033[1;34mDescription:\033[0m Sources remote library files from GitHub via BL_FILE_REGISTRY."
-                echo -e "\033[1;32mUsage:\033[0m       \033[33mbl_import <pattern>\033[0m"
+                echo -e "\033[1;32mUsage:\033[0m       \033[33mbl_import [-v] [--strict] <pattern>\033[0m"
                 echo -e "\033[1;36mExamples:\033[0m"
                 echo -e "  \033[1;33mbl_import \"*\"\033[0m         Import all registered remote files"
+                echo -e "  \033[1;33mbl_import --strict \"*\"\033[0m  Import all, but exit on the first file that fails to download"
                 echo -e "  \033[1;33mbl_import \"ui/*\"\033[0m      Import all ui/ remote files"
                 echo -e "  \033[1;33mbl_import \"core/colors.sh\"\033[0m  Import a specific remote file"
                 echo -e "\033[1;35mRequires:\033[0m    curl, BL_FILE_REGISTRY populated"
                 ;;
             bl_import_local)
                 echo -e "\033[1;34mDescription:\033[0m Core implementation behind import(). Sources local .sh/.bash and bash-shebang files."
-                echo -e "\033[1;32mUsage:\033[0m       \033[33mbl_import_local <pattern> [pattern...]\033[0m"
+                echo -e "\033[1;32mUsage:\033[0m       \033[33mbl_import_local [-v] [--strict] <pattern> [pattern...]\033[0m"
                 echo -e "\033[1;35mEligible files:\033[0m .sh, .bash extensions, or extensionless files with #!/*bash shebang."
                 echo -e "\033[1;35mNote:\033[0m        Deduplicates — same file is never sourced twice per call."
+                ;;
+            bl_compile)
+                echo -e "\033[1;34mDescription:\033[0m Bundles a directory of scripts into a single compiled script file."
+                echo -e "\033[1;32mUsage:\033[0m       \033[33mbl_compile <source_dir> <output_file>\033[0m"
+                echo -e "\033[1;36mExamples:\033[0m"
+                echo -e "  \033[1;33mbl_compile lib/ dist/bash-lib.sh\033[0m  Compiles the library into one file"
                 ;;
             bl_matrix_filler)
                 echo -e "\033[1;34mDescription:\033[0m Terminal digital rain animation effect (Matrix style) with persistent fading trails."
