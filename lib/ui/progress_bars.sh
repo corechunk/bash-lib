@@ -9,9 +9,10 @@ bl_progress_bar() {
     local show_status=false
     local show_log=false
     local log_height=3
-    local color_mode="global"
+    local color_mode="position"
     local r1=0; local g1=0; local b1=255 # Default Start: Blue
     local r2=0; local g2=255; local b2=0  # Default End: Green
+  # initialize width from flag
 
     # Flag Parser
     while [[ $# -gt 0 ]]; do
@@ -20,7 +21,9 @@ bl_progress_bar() {
             --status) show_status=true; shift ;;
             --log) show_log=true; shift ;;
             --log-height) show_log=true; log_height="$2"; shift 2 ;;
-            --color-mode) color_mode="$2"; shift 2 ;;
+            -w|--width) user_width="$2"; shift 2 ;;
+            -fw|--full-width) full_width=true; shift ;;
+            -c|--color-mode) color_mode="$2"; shift 2 ;;
             -h|--hex|--start) read r1 g1 b1 < <(bl_hex_to_rgb "$2"); shift 2 ;;
             --end) read r2 g2 b2 < <(bl_hex_to_rgb "$2"); shift 2 ;;
             *) shift ;;
@@ -32,6 +35,8 @@ bl_progress_bar() {
     if $show_status || $show_log; then tagged=true; fi
 
     local margin=2
+
+    local width=0  # actual rendering width, may be set from flags
     local bar_source="████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████"
     local empty_source="------------------------------------------------------------------------------------------------------------------------------------------------------"
     
@@ -42,7 +47,24 @@ bl_progress_bar() {
 
     tput civis
 
+    # Initialize previous terminal width tracker
+    local prev_term_w=0
     while true; do
+        # Check for terminal resize only when size changes
+        local term_w=$(tput cols)
+        if (( term_w != prev_term_w )); then
+            local max_allowed=$(( term_w - margin * 2 ))
+            if $full_width; then
+                width=$max_allowed
+            elif (( user_width > 0 )); then
+                width=$user_width
+                (( width > max_allowed )) && width=$max_allowed
+            else
+                width=$max_allowed
+            fi
+            prev_term_w=$term_w
+        fi
+
         # Non-blocking read (0.01s timeout)
         if read -t 0.01 -r line; then
             if $tagged; then
@@ -52,8 +74,8 @@ bl_progress_bar() {
                     L:*) 
                         if $show_log; then
                             local raw_msg="${line#L:}"
-                            local w=${COLUMNS:-$(tput cols)}
-                            local max_w=$((w - margin - 5))
+                            # Width handling is performed in the main render loop; no action needed here.
+                            local max_w=$((width - margin - 5))
                             ((max_w < 10)) && max_w=10
 
                             # Wrap by splitting into chunks
@@ -84,15 +106,14 @@ bl_progress_bar() {
         (( percent < 0 )) && percent=0
         (( percent > 100 )) && percent=100
 
-        # --- RENDER FRAME ---
-        local width=${COLUMNS:-$(tput cols)}
+        # Width handling is now done only on resize above
         local bar_max=$(( width - (margin * 2) - 2 ))
         (( bar_max < 10 )) && bar_max=10
 
         local filled_count=$(( bar_max * percent / 100 ))
         local spaces="${empty_source:0:$((bar_max - filled_count))}"
 
-        # Global color logic
+        # Global color logic (still calculated for header)
         local r_global=$(( r1 + (r2 - r1) * percent / 100 ))
         local g_global=$(( g1 + (g2 - g1) * percent / 100 ))
         local b_global=$(( b1 + (b2 - b1) * percent / 100 ))
@@ -171,7 +192,7 @@ bl_square_progress() {
             -H|--height) height="$2"; shift 2 ;;
             -fw|--full-width) full_width=true; shift ;;
             --brackets) show_brackets=true; shift ;;
-            --color-mode) color_mode="$2"; shift 2 ;;
+            -c|--color-mode) color_mode="$2"; shift 2 ;;
             -h|--hex|--start) read r1 g1 b1 < <(bl_hex_to_rgb "$2"); shift 2 ;;
             --end) read r2 g2 b2 < <(bl_hex_to_rgb "$2"); shift 2 ;;
             *) shift ;;
@@ -312,7 +333,7 @@ bl_spiral_progress() {
             -H|--height) height="$2"; shift 2 ;;
             -fw|--full-width) full_width=true; shift ;;
             --brackets) show_brackets=true; shift ;;
-            --color-mode) color_mode="$2"; shift 2 ;;
+            -c|--color-mode) color_mode="$2"; shift 2 ;;
             --direction) direction="$2"; shift 2 ;;
             -h|--hex|--start) read r1 g1 b1 < <(bl_hex_to_rgb "$2"); shift 2 ;;
             --end) read r2 g2 b2 < <(bl_hex_to_rgb "$2"); shift 2 ;;
@@ -467,7 +488,9 @@ bl_terrain_loader() {
             -fw|--full-width) width=$(tput cols); shift 1 ;;
             -fh|--full-height) height=$(( $(tput lines) - 2 )); shift 1 ;;
             -l|--label) label="$2"; shift 2 ;;
-            --color-mode) color_mode="$2"; shift 2 ;;
+            -c|--color-mode) color_mode="$2"; shift 2 ;;
+            -w|--width) width="$2"; shift 2 ;;
+            -fw|--full-width) full_width=true; shift ;;
             --pattern) pattern="$2"; shift 2 ;;
             --minecraft) pattern="minecraft"; shift 1 ;;
             --start) read r1 g1 b1 < <(bl_hex_to_rgb "$2"); shift 2 ;;
@@ -539,6 +562,7 @@ bl_terrain_loader() {
     done
 
     while true; do
+
         if read -t 0.05 -r line; then
             if [[ "$line" =~ ^[0-9]+$ ]]; then
                 percent="$line"
@@ -635,3 +659,12 @@ bl_terrain_loader() {
     tput cnorm
     echo ""
 }
+
+# --- Optimized Terrain Loader (experimental) ---
+bl_terrain_loader_opt() {
+    # Placeholder for a 3‑D‑optimized rendering version.
+    # Future work: redraw only changed rows, batch colour calculations, etc.
+    # For now it simply delegates to the original implementation.
+    bl_terrain_loader "$@"
+}
+

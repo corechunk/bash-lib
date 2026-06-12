@@ -42,7 +42,6 @@ You can source each specific file under its respective category individually usi
 ```bash
 # Sourcing Core components
 bl_import "core/colors.sh"
-bl_import "core/deps.sh"
 bl_import "core/import.sh"
 
 # Sourcing Info/Diagnostics components
@@ -67,4 +66,21 @@ for i in {1..100}; do echo "$i"; sleep 0.02; done | bl_terrain_loader -l "Loadin
 # Full-screen Minecraft-style chunk loading
 for i in {1..100}; do echo "$i"; sleep 0.02; done | bl_terrain_loader --minecraft -fw -fh --color-mode time
 ```
+
+## 6. All File Includes
+
+```bash
+# Core importer
+source <(curl -fsSL https://raw.githubusercontent.com/corechunk/bash-lib/main/lib/core/import.sh)
+# Core components
+bl_import "core/colors.sh"
+bl_import "core/import.sh"
+# UI components
+bl_import "ui/progress_bars.sh"
+bl_import "ui/matrix_filler.sh"
+# Info components
+bl_import "info/diagnostics.sh"
+bl_import "info/tutor.sh"
+```
+
 

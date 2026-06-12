@@ -112,9 +112,16 @@ bl_info_menu() {
                 echo -e "\033[1;35mNote:\033[0m        Deduplicates — same file is never sourced twice per call."
                 ;;
             bl_matrix_filler)
-                echo -e "\033[1;34mDescription:\033[0m Terminal digital rain animation effect (Matrix style)."
-                echo -e "\033[1;32mUsage:\033[0m       \033[33mbl_matrix_filler\033[0m"
-                echo -e "\033[1;35mBehaviors:\033[0m    Fills the terminal with falling green characters. Exits on any key press."
+                echo -e "\033[1;34mDescription:\033[0m Terminal digital rain animation effect (Matrix style) with persistent fading trails."
+                echo -e "\033[1;32mUsage:\033[0m       \033[33mbl_matrix_filler [--mode classic|rain|fade] [--start-hex HEX] [--end-hex HEX] [--lang j,c,k] [--density N] [--duration SEC]\033[0m"
+                echo -e "\033[1;36mArguments:\033[0m"
+                echo -e "  \033[1;33m--mode\033[0m        'classic' (default), 'rain', or 'fade' for smooth RGB blending."
+                echo -e "  \033[1;33m--start-hex\033[0m   Trail color gradient hex (e.g., '#00FF00')."
+                echo -e "  \033[1;33m--end-hex\033[0m     Head/Splash color gradient hex."
+                echo -e "  \033[1;33m--lang\033[0m        Characters: 'j' (Japanese), 'c' (Chinese), 'k' (Korean)."
+                echo -e "  \033[1;33m--density\033[0m     Spawn chance ratio (lower is denser, default 50)."
+                echo -e "  \033[1;33m--duration\033[0m    Auto-exit timeout in seconds."
+                echo -e "\033[1;35mBehaviors:\033[0m    Fills the terminal with falling characters. Exits on any key press."
                 echo -e "\033[1;36mDependencies:\033[0m tput"
                 ;;
             bl_square_progress)
@@ -193,9 +200,9 @@ bl_info_menu() {
                 echo -e "  \033[1;33mHEX_STRING\033[0m      Hex color string with or without '#'. E.g., '#00FF00' or '00FF00'."
                 echo -e "\033[1;35mOutputs:\033[0m      Space-separated red, green, and blue decimal integers on stdout. E.g., '0 255 0'."
                 ;;
-            bl_compare_versions)
+            bl_version_compare)
                 echo -e "\033[1;34mDescription:\033[0m Left-to-right component-wise semantic version comparison utility."
-                echo -e "\033[1;32mUsage:\033[0m       \033[33mbl_compare_versions <ver1> <ver2>\033[0m"
+                echo -e "\033[1;32mUsage:\033[0m       \033[33mbl_version_compare <ver1> <ver2>\033[0m"
                 echo -e "\033[1;36mParameters:\033[0m"
                 echo -e "  \033[1;33mver1\033[0m            First version (e.g. '1.2.0.1')."
                 echo -e "  \033[1;33mver2\033[0m            Second version to compare against (e.g. '1.3.0')."
@@ -225,9 +232,9 @@ bl_info_menu() {
                 echo -e "  \033[1;33mindices\033[0m         One or more expanded numbers to validate."
                 echo -e "\033[1;35mReturn Code:\033[0m  0 if all numbers are between 1 and max_index (inclusive); 1 otherwise."
                 ;;
-            bl_file_feeder)
+            bl_file_count_feeder_)
                 echo -e "\033[1;34mDescription:\033[0m Directory polling engine. Watches matching marker file creation to feed sync ratios."
-                echo -e "\033[1;32mUsage:\033[0m       \033[33mbl_file_feeder <total> [hz] [dir] [pattern]\033[0m"
+                echo -e "\033[1;32mUsage:\033[0m       \033[33mbl_file_count_feeder_ <total> [hz] [dir] [pattern]\033[0m"
                 echo -e "\033[1;36mParameters:\033[0m"
                 echo -e "  \033[1;33mtotal\033[0m           Total expected file count matching the pattern."
                 echo -e "  \033[1;33mhz\033[0m              Polling frequency in Hertz (default: 10)."
@@ -235,17 +242,17 @@ bl_info_menu() {
                 echo -e "  \033[1;33mpattern\033[0m         File match pattern. E.g., '*.done'."
                 echo -e "\033[1;35mOutputs:\033[0m      Standard stream of current file counts."
                 ;;
-            bl_percent_emitter)
+            _bl_count_percent_emitter_)
                 echo -e "\033[1;34mDescription:\033[0m Math streaming emitter translating raw completed integers into percentage tokens."
-                echo -e "\033[1;32mUsage:\033[0m       \033[33mbl_percent_emitter <total> [format]\033[0m"
+                echo -e "\033[1;32mUsage:\033[0m       \033[33m_bl_count_percent_emitter_ <total> [format]\033[0m"
                 echo -e "\033[1;36mParameters:\033[0m"
                 echo -e "  \033[1;33mtotal\033[0m           Denominator representing 100% completion."
                 echo -e "  \033[1;33mformat\033[0m          Set 'v2' to output tagged progress format (e.g. 'P:50') instead of raw strings."
                 echo -e "\033[1;35mOutputs:\033[0m      Percentage flow stream."
                 ;;
-            bl_log_feeder)
+            bl_file_log_feeder_)
                 echo -e "\033[1;34mDescription:\033[0m Tails a log file and reformats the last line as a progress bar message feed."
-                echo -e "\033[1;32mUsage:\033[0m       \033[33mbl_log_feeder <logfile> [hz]\033[0m"
+                echo -e "\033[1;32mUsage:\033[0m       \033[33mbl_file_log_feeder_ <logfile> [hz]\033[0m"
                 echo -e "\033[1;36mParameters:\033[0m"
                 echo -e "  \033[1;33mlogfile\033[0m         Path to log file being monitored."
                 echo -e "  \033[1;33mhz\033[0m              Tail polling frequency in Hertz (default: 5)."
@@ -290,10 +297,27 @@ bl_info_menu() {
                 echo -e "\033[1;32mUsage:\033[0m       \033[33mbl_pid_status <pid>\033[0m"
                 echo -e "\033[1;35mOutputs:\033[0m      Status string representing process states: 'RUNNING', 'SUCCESS', or 'FAILED'."
                 ;;
-            bl_reap)
+            bl_pid_reap)
                 echo -e "\033[1;34mDescription:\033[0m [Planned] Non-blocking tracking PID scavenger sweep."
-                echo -e "\033[1;32mUsage:\033[0m       \033[33mbl_reap\033[0m"
+                echo -e "\033[1;32mUsage:\033[0m       \033[33mbl_pid_reap\033[0m"
                 echo -e "\033[1;35mBehaviors:\033[0m    Iterates over background job registries, reaping dead process vectors and harvesting exit codes."
+                ;;
+            bl_pid_store)
+                echo -e "\033[1;34mDescription:\033[0m Stores a background PID in the global registry."
+                echo -e "\033[1;32mUsage:\033[0m       \033[33mbl_pid_store <name> <pid>\033[0m"
+                echo -e "\033[1;36mParameters:\033[0m"
+                echo -e "  \033[1;33mname\033[0m            Identifier name for the background process."
+                echo -e "  \033[1;33mpid\033[0m             Process ID."
+                ;;
+            bl_pid_wait)
+                echo -e "\033[1;34mDescription:\033[0m Waits for a specific registered background process to finish and unsets it."
+                echo -e "\033[1;32mUsage:\033[0m       \033[33mbl_pid_wait <name>\033[0m"
+                echo -e "\033[1;36mParameters:\033[0m"
+                echo -e "  \033[1;33mname\033[0m            Identifier name of the process."
+                ;;
+            bl_terrain_loader_opt)
+                echo -e "\033[1;34mDescription:\033[0m Experimental optimized terrain loader (delegates to bl_terrain_loader for now)."
+                echo -e "\033[1;32mUsage:\033[0m       \033[33mbl_terrain_loader_opt [args...]\033[0m"
                 ;;
             *)
                 echo -e "\033[1;34mDescription:\033[0m [Planned] Details and usage will be added upon implementation."

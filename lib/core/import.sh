@@ -1,15 +1,32 @@
 #!/usr/bin/env bash
 # --- bash-lib Core Loader & Registries ---
 
+# Verify that all listed dependencies exist in the environment.
+# Handles both shell functions (declare -f) and system commands (command -v).
+# Usage: bl_check_deps "caller_func" "dep1" "dep2" ...
+# Rule:  Any function with dependencies MUST call bl_check_deps as its first statement.
+bl_check_deps() {
+    local caller="$1"
+    shift
+    local missing=0
+    for dep in "$@"; do
+        if ! declare -f "$dep" >/dev/null 2>&1 && ! command -v "$dep" >/dev/null 2>&1; then
+            echo -e "\033[1;31m[ERROR]\033[0m $caller: Missing dependency '\033[1;33m$dep\033[0m'" >&2
+            missing=1
+        fi
+    done
+    return $missing
+}
+
 # Global registry of functions, categories, and dependencies.
 declare -g -A BL_REGISTRY=(
     # Core utilities (no shell-func deps; system cmds noted where needed)
     ["core|bl_check_deps"]=""
     ["core|bl_hex_to_rgb"]=""
-    ["core|bl_compare_versions"]=""
-    ["core|bl_parse_selection"]=""
-    ["core|bl_expand_selection"]=""
-    ["core|bl_validate_selection"]=""
+    ["core|bl_version_compare"]=""
+    ["string|bl_parse_selection"]=""
+    ["string|bl_expand_selection"]=""
+    ["string|bl_validate_selection"]=""
 
     # UI components
     ["ui|bl_progress_bar"]="bl_hex_to_rgb|bl_check_deps"
@@ -26,9 +43,11 @@ declare -g -A BL_REGISTRY=(
     ["ui|bl_toast"]=""
     ["ui|bl_input_secure"]=""
     ["ui|bl_chart_spark"]=""
-    ["ui|bl_file_feeder"]=""
-    ["ui|bl_percent_emitter"]=""
-    ["ui|bl_log_feeder"]=""
+
+    # I/O Pipes and Feeders
+    ["io|bl_file_count_feeder_"]=""
+    ["io|_bl_count_percent_emitter_"]=""
+    ["io|bl_file_log_feeder_"]=""
 
     # Info & Diagnostics
     ["info|bl_info_check"]="bl_registry_get_types|bl_registry_get_funcs|bl_registry_get_deps"
@@ -36,8 +55,10 @@ declare -g -A BL_REGISTRY=(
     ["info|bl_bash_tutor"]=""
 
     # Async operations
+    ["async|bl_pid_store"]=""
+    ["async|bl_pid_wait"]=""
     ["async|bl_pid_status"]=""
-    ["async|bl_reap"]=""
+    ["async|bl_pid_reap"]=""
 
     # Core Loader
     ["core|bl_import"]="curl"
@@ -49,8 +70,8 @@ declare -g -A BL_REGISTRY=(
 # === BL_FILE_REGISTRY_START ===
 declare -g -A BL_FILE_REGISTRY=(
     ["core|colors.sh"]="https://raw.githubusercontent.com/corechunk/bash-lib/main/lib/core/colors.sh"
-    ["core|deps.sh"]="https://raw.githubusercontent.com/corechunk/bash-lib/main/lib/core/deps.sh"
     ["core|import.sh"]="https://raw.githubusercontent.com/corechunk/bash-lib/main/lib/core/import.sh"
+    ["string|selection.sh"]="https://raw.githubusercontent.com/corechunk/bash-lib/main/lib/string/selection.sh"
     ["info|diagnostics.sh"]="https://raw.githubusercontent.com/corechunk/bash-lib/main/lib/info/diagnostics.sh"
     ["info|tutor.sh"]="https://raw.githubusercontent.com/corechunk/bash-lib/main/lib/info/tutor.sh"
     ["ui|progress_bars.sh"]="https://raw.githubusercontent.com/corechunk/bash-lib/main/lib/ui/progress_bars.sh"
@@ -235,6 +256,7 @@ _bl_is_sourceable() {
 }
 
 bl_import_local() {
+    bl_check_deps "bl_import_local" || return 1
     [[ $# -eq 0 ]] && { echo -e "\033[1;31m[import]\033[0m pattern required (e.g. \"lib/*\")" >&2; return 1; }
     shopt -s globstar nullglob
     local found=0
@@ -274,5 +296,6 @@ bl_import_local() {
 
 # Simple import keyword backed by bl_import_local
 import() {
+    bl_check_deps "import" "bl_import_local" || return 1
     bl_import_local "$@"
 }
