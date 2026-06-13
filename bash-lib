@@ -2361,8 +2361,8 @@ bl_progress_bar() {
             -w|--width) user_width="$2"; shift 2 ;;
             -fw|--full-width) full_width=true; shift ;;
             -c|--color-mode) color_mode="$2"; shift 2 ;;
-            -h|--hex|--start) read r1 g1 b1 < <(bl_hex_to_rgb "$2"); shift 2 ;;
-            --end) read r2 g2 b2 < <(bl_hex_to_rgb "$2"); shift 2 ;;
+            -h|--hex|--start) read r1 g1 b1 <<< "$(bl_hex_to_rgb "$2")"; shift 2 ;;
+            --end) read r2 g2 b2 <<< "$(bl_hex_to_rgb "$2")"; shift 2 ;;
             *) shift ;;
         esac
     done
@@ -2482,8 +2482,8 @@ bl_square_progress() {
             -fw|--full-width) full_width=true; shift ;;
             --brackets) show_brackets=true; shift ;;
             -c|--color-mode) color_mode="$2"; shift 2 ;;
-            -h|--hex|--start) read r1 g1 b1 < <(bl_hex_to_rgb "$2"); shift 2 ;;
-            --end) read r2 g2 b2 < <(bl_hex_to_rgb "$2"); shift 2 ;;
+            -h|--hex|--start) read r1 g1 b1 <<< "$(bl_hex_to_rgb "$2")"; shift 2 ;;
+            --end) read r2 g2 b2 <<< "$(bl_hex_to_rgb "$2")"; shift 2 ;;
             *) shift ;;
         esac
     done
@@ -2592,8 +2592,8 @@ bl_spiral_progress() {
             --brackets) show_brackets=true; shift ;;
             -c|--color-mode) color_mode="$2"; shift 2 ;;
             --direction) direction="$2"; shift 2 ;;
-            -h|--hex|--start) read r1 g1 b1 < <(bl_hex_to_rgb "$2"); shift 2 ;;
-            --end) read r2 g2 b2 < <(bl_hex_to_rgb "$2"); shift 2 ;;
+            -h|--hex|--start) read r1 g1 b1 <<< "$(bl_hex_to_rgb "$2")"; shift 2 ;;
+            --end) read r2 g2 b2 <<< "$(bl_hex_to_rgb "$2")"; shift 2 ;;
             *) shift ;;
         esac
     done
@@ -2722,8 +2722,8 @@ bl_terrain_loader() {
             -fw|--full-width) full_width=true; shift ;;
             --pattern) pattern="$2"; shift 2 ;;
             --minecraft) pattern="minecraft"; shift 1 ;;
-            --start) read r1 g1 b1 < <(bl_hex_to_rgb "$2"); shift 2 ;;
-            --end) read r2 g2 b2 < <(bl_hex_to_rgb "$2"); shift 2 ;;
+            --start) read r1 g1 b1 <<< "$(bl_hex_to_rgb "$2")"; shift 2 ;;
+            --end) read r2 g2 b2 <<< "$(bl_hex_to_rgb "$2")"; shift 2 ;;
             --fg) fg_color="\e[38;5;${2}m"; shift 2 ;;
             *) shift ;;
         esac
