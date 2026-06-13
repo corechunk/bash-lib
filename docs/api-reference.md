@@ -59,13 +59,13 @@ A detailed overview of all core variables, utilities, and components available i
 ## 📂 ui/
 *   📄 `progress_bars.sh`
     *   ⚙️ `bl_progress_bar()`: Renders highly responsive, color-transitioning ANSI progress loaders with optional tagged status and scrolling logs.
-        *   *Flags:* `-l` label · `--status` · `--log` · `--log-height N` · `--color-mode global|position` · `--start HEX` · `--end HEX`
+        *   *Flags:* `-l` label · `-w N` width · `-fw` full-width · `--status` · `--log` · `--log-height N` · `--color-mode global|position` · `--start HEX` · `--end HEX`
     *   ⚙️ `bl_square_progress()`: Renders a configurable block grid progress indicator that fills block by block with positional or global gradients.
         *   *Flags:* `-l` label · `-t` tagged · `-w N` width · `-H N` height · `-fw` full-width · `--brackets` · `--color-mode global|position` · `--start HEX` · `--end HEX`
     *   ⚙️ `bl_spiral_progress()`: Renders a block grid that fills in a configurable inward or outward spiral with gradient support.
         *   *Flags:* `-l` label · `-t` tagged · `-w N` width · `-H N` height · `-fw` full-width · `--direction in|out` · `--brackets` · `--color-mode global|position` · `--start HEX` · `--end HEX`
     *   ⚙️ `bl_terrain_loader()`: Renders an animated 2D terrain chunk-loading grid. Blocks fill one at a time using random, center-out, or authentic Minecraft patterns.
-        *   *Flags:* `-l` label · `-w N` width · `-h N` height · `-fw` full-width · `-fh` full-height · `--pattern random|center-out|minecraft` · `--minecraft` (shortcut) · `--color-mode time|position|global` · `--start HEX` · `--end HEX`
+        *   *Flags:* `-l` label · `-w N` width · `-h N` height · `-fw` full-width · `-fh` full-height · `--pattern random|center-out|minecraft` · `--minecraft` (shortcut) · `--color-mode time|position|global` · `--start HEX` · `--end HEX` · `--fg COLOR`
     *   ⚙️ `bl_terrain_loader_opt()`: Experimental optimized terrain loader that delegates to `bl_terrain_loader`.
 *   📄 `matrix_filler.sh`
     *   ⚙️ `bl_matrix_filler()`: Fills the terminal with a pure-Bash, fully responsive falling green digital rain (Matrix style). Exits on any key press.
