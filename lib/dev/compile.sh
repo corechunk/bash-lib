@@ -13,6 +13,7 @@ bl_compile() {
     local recursive=0
     local write_shebang=1
     local shebang_val="auto"
+    local -a compile_remote_urls=()
 
     # Parse arguments
     while [[ "$#" -gt 0 ]]; do
@@ -24,6 +25,20 @@ bl_compile() {
             -v|--verbose) verbose=1; shift 1 ;;
             -r|--recursive) recursive=1; shift 1 ;;
             --no-shebang) write_shebang=0; shift 1 ;;
+            --lib-curl)
+                shift
+                if [[ "$1" == "start" ]]; then
+                    shift
+                    while [[ "$#" -gt 0 && "$1" != "stop" ]]; do
+                        compile_remote_urls+=("$1")
+                        shift
+                    done
+                    [[ "$1" == "stop" ]] && shift
+                else
+                    compile_remote_urls+=("$1")
+                    shift
+                fi
+                ;;
             --shebang)
                 if [[ "$2" == "false" || "$2" == "none" ]]; then
                     write_shebang=0
@@ -156,6 +171,26 @@ bl_compile() {
     if [[ "$strip_mode" == "comments" || "$strip_mode" == "all" ]]; then
         sed_args+=("-e" "/^[[:space:]]*#/d")
     fi
+
+    # Process Remote URLs (First)
+    for url in "${compile_remote_urls[@]}"; do
+        [[ "$verbose" -eq 1 ]] && echo -e "  \033[1;33m↳\033[0m \033[1;34m[Remote Inlined]\033[0m \033[36m$url\033[0m"
+        echo "# --- Inlined Remote: $url ---" >> "$final_out"
+        
+        local tmp_fetch
+        tmp_fetch=$(mktemp)
+        curl -fsSL "$url" > "$tmp_fetch"
+        local ec=$?
+        
+        if [[ $ec -ne 0 ]]; then
+            echo -e "\033[1;31m❌ Error:\033[0m Failed to fetch $url" >&2
+            [[ "$strict" -eq 1 ]] && exit 1
+        else
+            sed "${sed_args[@]}" "$tmp_fetch" >> "$final_out"
+            echo "" >> "$final_out"
+        fi
+        rm -f "$tmp_fetch"
+    done
 
     for file in "${files[@]}"; do
         # Skip the main file (-ef checks if they point to the same physical file safely)

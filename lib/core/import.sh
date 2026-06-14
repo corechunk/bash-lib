@@ -249,16 +249,42 @@ bl_import() {
     local strict=0
     local has_error=0
     local pattern
+    local -a remote_urls=()
 
     # Parse flags
     while [[ "$#" -gt 0 ]]; do
         case "$1" in
             -v|--verbose) verbose=1; shift ;;
             --strict) strict=1; shift ;;
+            --lib-curl)
+                shift
+                if [[ "$1" == "start" ]]; then
+                    shift
+                    while [[ "$#" -gt 0 && "$1" != "stop" ]]; do
+                        remote_urls+=("$1")
+                        shift
+                    done
+                    [[ "$1" == "stop" ]] && shift
+                else
+                    remote_urls+=("$1")
+                    shift
+                fi
+                ;;
             -*) echo -e "\033[1;31m[ERROR]\033[0m Unknown flag: $1" >&2; return 1 ;;
             *) pattern="$1"; shift ;;
         esac
     done
+    
+    # If URLs provided, source them and return
+    if [[ ${#remote_urls[@]} -gt 0 ]]; then
+        for url in "${remote_urls[@]}"; do
+            if ! _bl_curl_source "remote|$url" "$url" "$verbose" 0; then
+                [[ "$strict" -eq 1 ]] && return 1
+            fi
+        done
+        return 0
+    fi
+    
     pattern="${pattern:-*}"
 
     local search_cat=""
