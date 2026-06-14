@@ -174,7 +174,7 @@ bl_compile() {
 
     # Process Remote URLs (First)
     for url in "${compile_remote_urls[@]}"; do
-        [[ "$verbose" -eq 1 ]] && echo -e "  \033[1;33m↳\033[0m \033[1;34m[Remote Inlined]\033[0m \033[36m$url\033[0m"
+        [[ "$verbose" -eq 1 ]] && echo -e "  \033[1;33m↳\033[0m \033[1;34m[Remote Include]\033[0m \033[36m$url\033[0m"
         echo "# --- Inlined Remote: $url ---" >> "$final_out"
         
         local tmp_fetch
