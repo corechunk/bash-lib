@@ -2,3 +2,4 @@ tests/
 tmp/
 *.done
 log.txt
+docs/draft-plans/
