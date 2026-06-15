@@ -35,7 +35,18 @@ bl_import "info/tutor.sh" && bl_bash_tutor
 
 ---
 
-## 📦 Local Sourcing
+## 🛠️ Diagnostics & Interactive Explorer
+Bash-lib includes built-in tools to verify your environment and explore library functions:
+
+```bash
+# 1. Run the namespace diagnostic checker (verifies dependencies and loaded state)
+bl_info_check
+
+# 2. Launch the interactive library explorer menu
+bl_info_menu
+```
+
+## 📦 Local Sourcing & Bundling
 
 If you prefer to source files locally from your clone:
 
