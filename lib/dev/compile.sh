@@ -154,6 +154,7 @@ bl_compile() {
             echo -e "  \033[1;33m📝\033[0m \033[1;35m[Shebang]\033[0m     \033[90m(None)\033[0m"
         fi
         echo -e "  \033[1;33m⚙️\033[0m \033[1;35m[Strip Mode]\033[0m  \033[32m$strip_mode\033[0m"
+        echo -e "  \033[1;33m⚖️\033[0m \033[1;35m[Strict Mode]\033[0m \033[32m$strict\033[0m"
     fi
 
     # Initialize/clear the output file
@@ -188,7 +189,7 @@ bl_compile() {
         if [[ $ec -ne 0 ]]; then
             echo -e "\033[1;31m❌ Error:\033[0m Failed to fetch $url" >&2
             fetch_failed=1
-            [[ "$strict" -eq 1 ]] && exit 1
+            [[ "$strict" -eq 1 ]] && return 1
             rm -f "$tmp_fetch"
             continue
         else
