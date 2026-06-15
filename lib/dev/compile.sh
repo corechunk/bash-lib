@@ -13,6 +13,7 @@ bl_compile() {
     local recursive=0
     local write_shebang=1
     local shebang_val="auto"
+    local strict=0
     local -a compile_remote_urls=()
 
     # Parse arguments
@@ -25,6 +26,7 @@ bl_compile() {
             -v|--verbose) verbose=1; shift 1 ;;
             -r|--recursive) recursive=1; shift 1 ;;
             --no-shebang) write_shebang=0; shift 1 ;;
+            --strict) strict=1; shift 1 ;;
             --lib-curl)
                 shift
                 if [[ "$1" == "start" ]]; then
