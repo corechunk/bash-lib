@@ -175,6 +175,7 @@ bl_compile() {
     fi
 
     # Process Remote URLs (First)
+    local fetch_failed=0
     for url in "${compile_remote_urls[@]}"; do
         [[ "$verbose" -eq 1 ]] && echo -e "  \033[1;33m↳\033[0m \033[1;34m[Remote Include]\033[0m \033[36m$url\033[0m"
         echo "# --- Inlined Remote: $url ---" >> "$final_out"
@@ -186,7 +187,10 @@ bl_compile() {
         
         if [[ $ec -ne 0 ]]; then
             echo -e "\033[1;31m❌ Error:\033[0m Failed to fetch $url" >&2
+            fetch_failed=1
             [[ "$strict" -eq 1 ]] && exit 1
+            rm -f "$tmp_fetch"
+            continue
         else
             sed "${sed_args[@]}" "$tmp_fetch" >> "$final_out"
             echo "" >> "$final_out"
@@ -214,7 +218,11 @@ bl_compile() {
     
     # Finalize
     chmod +x "$final_out"
-    echo -e "✅ \033[1;32mSuccess:\033[0m Compiled to \033[1;36m$final_out\033[0m"
+    if [[ "$fetch_failed" -eq 1 ]]; then
+        echo -e "⚠️ \033[1;33mFinished with warnings:\033[0m Compiled to \033[1;36m$final_out\033[0m (Some remote files failed to fetch)."
+    else
+        echo -e "✅ \033[1;32mSuccess:\033[0m Compiled to \033[1;36m$final_out\033[0m"
+    fi
 }
 
 bl_compile_folder() {
