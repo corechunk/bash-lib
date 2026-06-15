@@ -220,8 +220,10 @@ bl_compile() {
     chmod +x "$final_out"
     if [[ "$fetch_failed" -eq 1 ]]; then
         echo -e "⚠️ \033[1;33mFinished with warnings:\033[0m Compiled to \033[1;36m$final_out\033[0m (Some remote files failed to fetch)."
+        return 1
     else
         echo -e "✅ \033[1;32mSuccess:\033[0m Compiled to \033[1;36m$final_out\033[0m"
+        return 0
     fi
 }
 
