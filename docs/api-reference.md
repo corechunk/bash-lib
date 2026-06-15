@@ -29,6 +29,7 @@ A detailed overview of all core variables, utilities, and components available i
 ## 📂 dev/
 *   📄 `compile.sh`
     *   ⚙️ `bl_compile()`: Bundles a directory of bash-lib modules into a single, compiled script file.
+        *   *Flags:* `-d` dir · `-o` out-name · `-m` main · `--out-dir` · `-v` verbose · `-r` recursive · `--no-shebang` · `--shebang value` · `-s` strip [empty\|comments\|all] · `--strict` · `--lib-curl` [start \<urls...\> stop]
 
 ## 📂 string/
 *   📄 `selection.sh`

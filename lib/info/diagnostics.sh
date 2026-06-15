@@ -114,9 +114,11 @@ bl_info_menu() {
                 ;;
             bl_compile)
                 echo -e "\033[1;34mDescription:\033[0m Bundles a directory of scripts into a single compiled script file."
-                echo -e "\033[1;32mUsage:\033[0m       \033[33mbl_compile <source_dir> <output_file>\033[0m"
+                echo -e "\033[1;32mUsage:\033[0m       \033[33mbl_compile --dir <src> --out-name <name> [--main <main_file>] [--out-dir <dir>] [-v|--verbose] [-r|--recursive] [--no-shebang|--shebang <value>] [-s|--strip [empty|comments|all]] [--strict] [--lib-curl [start <urls...> stop]]\033[0m"
                 echo -e "\033[1;36mExamples:\033[0m"
-                echo -e "  \033[1;33mbl_compile lib/ dist/bash-lib.sh\033[0m  Compiles the library into one file"
+                echo -e "  \033[1;33mbl_compile --dir lib/ --out-name bash-lib.sh\033[0m  Compiles the library into one file"
+                echo -e "  \033[1;33mbl_compile --dir lib/ --out-name cplay --lib-curl start \"url1\" \"url2\" stop\033[0m  Inlines remote scripts"
+                echo -e "  \033[1;33mbl_compile --dir lib/ --out-name cplay --strict\033[0m  Fails build if any fetch fails"
                 ;;
             bl_matrix_filler)
                 echo -e "\033[1;34mDescription:\033[0m Terminal digital rain animation effect (Matrix style) with persistent fading trails."

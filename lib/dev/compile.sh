@@ -174,33 +174,36 @@ bl_compile() {
     if [[ "$strip_mode" == "comments" || "$strip_mode" == "all" ]]; then
         sed_args+=("-e" "/^[[:space:]]*#/d")
     fi
+# Process Remote URLs (First)
+local fetch_failed=0
+for url in "${compile_remote_urls[@]}"; do
+    [[ "$verbose" -eq 1 ]] && echo -e "  \033[1;33m↳\033[0m \033[1;34m[Remote Include]\033[0m \033[36m$url\033[0m"
 
-    # Process Remote URLs (First)
-    local fetch_failed=0
-    for url in "${compile_remote_urls[@]}"; do
-        [[ "$verbose" -eq 1 ]] && echo -e "  \033[1;33m↳\033[0m \033[1;34m[Remote Include]\033[0m \033[36m$url\033[0m"
-        echo "# --- Inlined Remote: $url ---" >> "$final_out"
-        
-        local tmp_fetch
-        tmp_fetch=$(mktemp)
-        curl -fsSL "$url" > "$tmp_fetch"
-        local ec=$?
-        
-        if [[ $ec -ne 0 ]]; then
-            echo -e "\033[1;31m❌ Error:\033[0m Failed to fetch $url" >&2
-            fetch_failed=1
-            [[ "$strict" -eq 1 ]] && return 1
-            rm -f "$tmp_fetch"
-            continue
-        else
-            sed "${sed_args[@]}" "$tmp_fetch" >> "$final_out"
-            echo "" >> "$final_out"
-        fi
+    local tmp_fetch
+    tmp_fetch=$(mktemp)
+    curl -fsSL "$url" > "$tmp_fetch"
+    local ec=$?
+
+    if [[ $ec -ne 0 ]]; then
+        echo -e "\033[1;31m❌ Error:\033[0m Failed to fetch $url" >&2
+        fetch_failed=1
         rm -f "$tmp_fetch"
-    done
+        break
+    fi
 
-    for file in "${files[@]}"; do
-        # Skip the main file (-ef checks if they point to the same physical file safely)
+    echo "# --- Inlined Remote: $url ---" >> "$final_out"
+    sed "${sed_args[@]}" "$tmp_fetch" >> "$final_out"
+    echo "" >> "$final_out"
+    rm -f "$tmp_fetch"
+done
+
+for file in "${files[@]}"; do
+    # If fetch failed and in strict mode, abort local processing.
+    if [[ "$fetch_failed" -eq 1 && "$strict" -eq 1 ]]; then
+        break
+    fi
+
+    # Skip the main file (-ef checks if they point to the same physical file safely)
         if [[ -z "$main_file" || ! "$file" -ef "$main_file" ]]; then
             [[ "$verbose" -eq 1 ]] && echo -e "  \033[1;33m↳\033[0m \033[1;34m[Include]\033[0m \033[36m$file\033[0m"
             echo "# --- Included: $file ---" >> "$final_out"
