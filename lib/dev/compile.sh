@@ -134,23 +134,23 @@ bl_compile() {
     fi
 
     if [[ "$verbose" -eq 1 ]]; then
-        printf "📦 \033[1;34mCompiling scripts\033[0m...\n"
-        printf "  📁  %-20b \033[32m%s\033[0m\n" "\033[1;35m[Source Dir]\033[0m" "$source_dir"
-        printf "  📂  %-20b \033[32m%s\033[0m\n" "\033[1;35m[Output Dir]\033[0m" "$out_dir"
-        printf "  📄  %-20b \033[32m%s\033[0m\n" "\033[1;35m[Output Name]\033[0m" "$out_name"
+        echo -e "📦 \033[1;34mCompiling scripts\033[0m..."
+        echo -e "  📁   \033[1;35m[Source Dir]\033[0m      \033[32m$source_dir\033[0m"
+        echo -e "  📂   \033[1;35m[Output Dir]\033[0m      \033[32m$out_dir\033[0m"
+        echo -e "  📄   \033[1;35m[Output Name]\033[0m     \033[32m$out_name\033[0m"
         if [[ -n "$main_file" ]]; then
-            printf "  🎯  %-20b \033[32m%s\033[0m\n" "\033[1;35m[Main Entry]\033[0m" "$main_file"
+            echo -e "  🎯   \033[1;35m[Main Entry]\033[0m      \033[32m$main_file\033[0m"
         else
-            printf "  🎯  %-20b \033[90m(None)\033[0m\n" "\033[1;35m[Main Entry]\033[0m"
+            echo -e "  🎯   \033[1;35m[Main Entry]\033[0m      \033[90m(None)\033[0m"
         fi
-        printf "  🔄  %-20b \033[32m%s\033[0m\n" "\033[1;35m[Recursive]\033[0m" "$([[ $recursive -eq 1 ]] && echo "true" || echo "false")"
+        echo -e "  🔄   \033[1;35m[Recursive]\033[0m       \033[32m$([[ $recursive -eq 1 ]] && echo "true" || echo "false")\033[0m"
         if [[ "$write_shebang" -eq 1 ]]; then
-            printf "  📝  %-20b \033[32m%s\033[0m\n" "\033[1;35m[Shebang]\033[0m" "$shebang"
+            echo -e "  📝   \033[1;35m[Shebang]\033[0m         \033[32m$shebang\033[0m"
         else
-            printf "  📝  %-20b \033[90m(None)\033[0m\n" "\033[1;35m[Shebang]\033[0m"
+            echo -e "  📝   \033[1;35m[Shebang]\033[0m         \033[90m(None)\033[0m"
         fi
-        printf "  ⚙️  %-20b \033[32m%s\033[0m\n" "\033[1;35m[Strip Mode]\033[0m" "$strip_mode"
-        printf "  ⚖️  %-20b \033[32m%s\033[0m\n" "\033[1;35m[Strict Mode]\033[0m" "$strict"
+        echo -e "  ⚙️   \033[1;35m[Strip Mode]\033[0m      \033[32m$strip_mode\033[0m"
+        echo -e "  ⚖️   \033[1;35m[Strict Mode]\033[0m     \033[32m$strict\033[0m"
     fi
 
     # Initialize/clear the output file
