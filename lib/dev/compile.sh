@@ -134,27 +134,23 @@ bl_compile() {
     fi
 
     if [[ "$verbose" -eq 1 ]]; then
-        echo -e "📦 \033[1;34mCompiling scripts\033[0m..."
-        echo -e "  \033[1;33m📁\033[0m \033[1;35m[Source Dir]\033[0m  \033[32m$source_dir\033[0m"
-        echo -e "  \033[1;33m📂\033[0m \033[1;35m[Output Dir]\033[0m  \033[32m$out_dir\033[0m"
-        echo -e "  \033[1;33m📄\033[0m \033[1;35m[Output Name]\033[0m \033[32m$out_name\033[0m"
+        printf "📦 \033[1;34mCompiling scripts\033[0m...\n"
+        printf "  \033[1;33m📁\033[0m %-25b \033[32m%s\033[0m\n" "\033[1;35m[Source Dir]\033[0m" "$source_dir"
+        printf "  \033[1;33m📂\033[0m %-25b \033[32m%s\033[0m\n" "\033[1;35m[Output Dir]\033[0m" "$out_dir"
+        printf "  \033[1;33m📄\033[0m %-25b \033[32m%s\033[0m\n" "\033[1;35m[Output Name]\033[0m" "$out_name"
         if [[ -n "$main_file" ]]; then
-            echo -e "  \033[1;33m🎯\033[0m \033[1;35m[Main Entry]\033[0m  \033[32m$main_file\033[0m"
+            printf "  \033[1;33m🎯\033[0m %-25b \033[32m%s\033[0m\n" "\033[1;35m[Main Entry]\033[0m" "$main_file"
         else
-            echo -e "  \033[1;33m🎯\033[0m \033[1;35m[Main Entry]\033[0m  \033[90m(None)\033[0m"
+            printf "  \033[1;33m🎯\033[0m %-25b \033[90m(None)\033[0m\n" "\033[1;35m[Main Entry]\033[0m"
         fi
-        if [[ "$recursive" -eq 1 ]]; then
-            echo -e "  \033[1;33m🔄\033[0m \033[1;35m[Recursive]\033[0m   \033[32mtrue\033[0m"
-        else
-            echo -e "  \033[1;33m🔄\033[0m \033[1;35m[Recursive]\033[0m   \033[32mfalse\033[0m"
-        fi
+        printf "  \033[1;33m🔄\033[0m %-25b \033[32m%s\033[0m\n" "\033[1;35m[Recursive]\033[0m" "$([[ $recursive -eq 1 ]] && echo "true" || echo "false")"
         if [[ "$write_shebang" -eq 1 ]]; then
-            echo -e "  \033[1;33m📝\033[0m \033[1;35m[Shebang]\033[0m     \033[32m$shebang\033[0m"
+            printf "  \033[1;33m📝\033[0m %-25b \033[32m%s\033[0m\n" "\033[1;35m[Shebang]\033[0m" "$shebang"
         else
-            echo -e "  \033[1;33m📝\033[0m \033[1;35m[Shebang]\033[0m     \033[90m(None)\033[0m"
+            printf "  \033[1;33m📝\033[0m %-25b \033[90m(None)\033[0m\n" "\033[1;35m[Shebang]\033[0m"
         fi
-        echo -e "  \033[1;33m⚙️\033[0m \033[1;35m[Strip Mode]\033[0m  \033[32m$strip_mode\033[0m"
-        echo -e "  \033[1;33m⚖️\033[0m \033[1;35m[Strict Mode]\033[0m \033[32m$strict\033[0m"
+        printf "  \033[1;33m⚙️\033[0m %-25b \033[32m%s\033[0m\n" "\033[1;35m[Strip Mode]\033[0m" "$strip_mode"
+        printf "  \033[1;33m⚖️\033[0m %-25b \033[32m%s\033[0m\n" "\033[1;35m[Strict Mode]\033[0m" "$strict"
     fi
 
     # Initialize/clear the output file
@@ -215,7 +211,7 @@ for file in "${files[@]}"; do
 
     # --- Append Main Entry ---
     if [[ -n "$main_file" ]]; then
-        [[ "$verbose" -eq 1 ]] && echo -e "  \033[1;35m➜\033[0m \033[1;33m[Main Entry]\033[0m \033[36m$main_file\033[0m"
+        [[ "$verbose" -eq 1 ]] && printf "  \033[1;35m➜\033[0m  %-15b \033[36m%s\033[0m\n" "\033[1;33m[Main Entry]\033[0m" "$main_file"
         echo "# --- Main Entry: $main_file ---" >> "$final_out"
         sed "${sed_args[@]}" "$main_file" >> "$final_out"
     fi
@@ -223,10 +219,10 @@ for file in "${files[@]}"; do
     # Finalize
     chmod +x "$final_out"
     if [[ "$fetch_failed" -eq 1 ]]; then
-        echo -e "⚠️ \033[1;33mFinished with warnings:\033[0m Compiled to \033[1;36m$final_out\033[0m (Some remote files failed to fetch)."
+        echo -e "⚠️  \033[1;33mFinished with warnings:\033[0m Compiled to \033[1;36m$final_out\033[0m (Some remote files failed to fetch)."
         return 1
     else
-        echo -e "✅ \033[1;32mSuccess:\033[0m Compiled to \033[1;36m$final_out\033[0m"
+        echo -e "✅  \033[1;32mSuccess:\033[0m Compiled to \033[1;36m$final_out\033[0m"
         return 0
     fi
 }
